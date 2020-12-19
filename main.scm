@@ -2,11 +2,11 @@
 
 ;; DONE Render a single clickable UI element
 
-;; TODO Create and render a grid of clickable buttons
+;; DONE* Create and render a grid of clickable buttons
 
 ;; TODO Implement event dispatching to handle button clicks
 
-;; TODO Wrap everything in classes
+;; DONE Wrap everything in classes
 
 ;; TODO Retrieve gamedata from a network port
 
@@ -52,6 +52,24 @@
   (tiles #:init-keyword #:tiles
 	 #:accessor     tiles))
 
+(define (update-board! tiles)
+  ;; WARNING Requires the image of each tile to already be set!
+  (define (f y-index row)
+    (define (g x-index col)
+      (set! (bound col)
+	(rect (+ (vec2-x origin)
+		 (* (texture-width  (image col))
+		    x-index))
+	      (+ (vec2-y origin)
+		 (* (texture-height (image col))
+		    y-index))
+	      (texture-width  (image col))
+	      (texture-height (image col)))))
+    (map-range g 1 1 row))
+  (map-range f 1 1 tiles))
+
+(define player #f)
+(define enemy  #f)
 
 ;;; Global variables
 
@@ -75,9 +93,9 @@
 
 ;; Basic range function beacuse the Scheme standard is very minimal
 (define (range start stop step)
-  (if (or (and (>  step 0)
+  (if (or (and (>  step  0)
                (>= start stop))
-          (and (<= step 0)
+          (and (<= step  0)
                (<= start stop)))
       '()
       (cons start (range (+ start step) stop step))))
@@ -89,14 +107,16 @@
                      (cons (range start stop step)
                            xs)))))
 
-;; Draws a grid of images, WARNING: Assumes that all images are the
-;; same size!
-(define (draw-board images origin)
-  (define (f is xs)
-    (define (g i x)
+;; Draws a grid of images, WARNING: Assumes that all images are set
+;; and same size!
+(define (draw-board tiles origin)
+  (define (f y-index xs)
+    (define (g x-index x)
       (draw-sprite x (vec2+ origin
-			    (vec2* (vec2 (texture-width x) (texture-height x))
-				   (vec2 i                 is)))))
+			    (vec2* (vec2 (texture-width  (image x))
+					 (texture-height (image x)))
+				   (vec2 x-index
+					 y-index)))))
     (map-range g 1 1 xs))
   (map-range f 1 1 images))
 
@@ -113,13 +133,31 @@
 		     (/ (window-height (current-window)) 2)))
   ;; TODO For testing purposes only!
   (set! image  (load-image "./image.bmp"))
-  (set! test (list (list image image image)
-		   (list image image image)
-		   (list image image image))))
+  (set! player (make <board>
+		 #:tiles (list (list (make <tile> #:image image)
+				     (make <tile> #:image image)
+				     (make <tile> #:image image))
+			       (list (make <tile> #:image image)
+				     (make <tile> #:image image)
+				     (make <tile> #:image image))
+			       (list (make <tile> #:image image)
+				     (make <tile> #:image image)
+				     (make <tile> #:image image)))))
+  (set! enemy (make <board>
+		#:tiles (list (list (make <tile> #:image image)
+				    (make <tile> #:image image)
+				    (make <tile> #:image image))
+			      (list (make <tile> #:image image)
+				    (make <tile> #:image image)
+				    (make <tile> #:image image))
+			      (list (make <tile> #:image image)
+				    (make <tile> #:image image)
+				    (make <tile> #:image image))))))
 
 ;;; Core event loop
 
 (define (update dt)
+  ;; For live coding
   (poll-coop-repl-server repl))
 
 (define (draw alpha)
@@ -127,17 +165,19 @@
 	(height (texture-height image))
 	(left   (vec2 (/ (vec2-x center)       2) (vec2-y center)))
 	(right  (vec2 (/ (* 3 (vec2-x center)) 2) (vec2-y center))))
-    (draw-board test (vec2 0 0))
-    ;; (draw-sprite image left
-    ;; 		 #:origin (vec2 (/ width  2) (/ height 2)))
-    ;; (draw-sprite image right
-    ;; 		 #:origin (vec2 (/ width  2) (/ height 2)))
-    ))
+    ;; (draw-board player left)
+    ;; (draw-board enemy  right)
+    #f))
 
 (define (mouse-release mouse-button x y)
-  ;; (cond ((button-clicked? tile-1 x y) (display "Gotcha!\n"))
-  ;; 	(else #f))
-  #f
-  )
+  (cond ((map (lambda (ts) (map (lambda (t) button-clicked?)
+				ts))
+	      (tiles player))
+	 (display "Gotcha!\n"))
+	((map (lambda (ts) (map (lambda (t) (button-clicked? mouse-button ))
+				ts))
+	      (tiles enemy))
+	 (display "Bombing!\n"))
+	(else #f)))
 
 (run-game #:load load #:update update #:draw draw #:mouse-release mouse-release)
