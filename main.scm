@@ -26,19 +26,32 @@
 	     (chickadee graphics font)
 	     (chickadee scripting))
 
-;; (define-class <tile> ()
-;;   (image #:init-keyword image)
-;;   (rect))
-
 ;;; Classes
+
+;; NOTE GOOPS class slots can't take type specifiers unlike CLOS slots
+(define-class <tile> ()
+  (image #:init-keyword #:image
+	 #:accessor     image)
+  (rect  #:init-keyword #:bound
+	 #:accessor     bound)
+  ;; (width #:getter tile-width ; Immutable, depends on the image field
+  ;; 	 ;; Virtual allocation means that the slot is computed and not
+  ;; 	 ;; stored as a part of the object
+  ;; 	 #:allocation #:virtual
+  ;; 	 #:slot-ref
+  ;; 	 (lambda (object)
+  ;; 	   (texture-width  (image object))))
+  ;; (height #:getter tile-height ; Immutable, depends on the image field
+  ;; 	  #:allocation #:virtual
+  ;; 	  #:slot-ref
+  ;; 	  (lambda (object)
+  ;; 	    (texture-height (image object))))
+  )
 
 (define-class <board> ()
   (tiles #:init-keyword #:tiles
 	 #:accessor     tiles))
 
-(define-class <player-board> (<board>))
-
-(define-class <enemy-board> (<board>))
 
 ;;; Global variables
 
