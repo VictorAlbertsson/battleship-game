@@ -1,28 +1,36 @@
 #!/usr/bin/env -S guile -s
 !# ;; -*- scheme -*- (for emacs)
 
+(add-to-load-path ".")
+
 ;; All classes/methods/functions shared between the client and server
 ;; goes into 'lib.scm'
-(load "lib.scm")
+(use-modules (game-lib)
+	     (ice-9 rdelim)
+	     (oop goops)
+	     (rnrs bytevectors)
+	     (srfi srfi-26)
+	     (system repl coop-server) ; For live coding while the game is running
+	     (chickadee)
+	     (chickadee math vector)
+	     (chickadee math rect)
+	     (chickadee graphics texture)
+	     (chickadee graphics sprite)
+	     (chickadee graphics font)
+	     (chickadee scripting))
 
 ;;; Server
 
-(use-modules (ice-9 rdelim))
-
-;; TODO Limit the number of connections to only 2
-;; TODO Connect the main loop of the server with that of the client
-;; TODO Connect the 2 clients' main loops
-;; TODO Handle game logic on the server
-;; TODO Serialize game data as S-exprs sent as strings over the socket
 (let ((server (socket PF_INET SOCK_STREAM 0)))
   ;; Prevents the nightmare of 'address already in use' due to
   ;; unclosed ports after the program has closed
   (setsockopt server SOL_SOCKET SO_REUSEADDR 1)
   ;; INADDR_ANY means any machine interface to the internet is valid
   ;; including 'localhost'
-  (bind   server AF_INET INADDR_ANY 2904)
+  (bind server AF_INET INADDR_ANY 2904)
   ;; Initialize the server connection
   (listen server 2)
+  (define image (load-image "./image.bmp"))
   (define <1>player
     (make <board>
       #:tiles (list (list (make <tile> #:image image)
@@ -52,4 +60,4 @@
 	   (<1>request           (read-line <1>client)))
       (cond ((string=? <1>request ",test")  (display "'test' received!"))
 	    ((string=? <1>request ",self")  (write <1>player <1>client))
-	    ((string=? <1>request ",enemy") (write <1>player <2>client))))))
+	    ((string=? <1>request ",enemy") (write <2>player <1>client))))))

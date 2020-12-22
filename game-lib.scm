@@ -1,3 +1,60 @@
+;;; TODOs
+
+;; NOTE DONE* means that the feature specification is complete but not
+;; fully implemented/working
+
+;; DONE Render a single clickable UI element
+
+;; DONE* Create and render a grid of clickable buttons
+
+;; TODO Implement event dispatching to handle button clicks
+
+;; DONE Wrap everything in classes
+
+;; DONE* Retrieve gamedata from a network port
+
+;; TODO Implement player turns
+
+;; TODO Implement server to connect to remote instances of the game
+
+;; TODO Limit the number of connections to only 2
+
+;; TODO Connect the main loop of the server with that of the client
+
+;; TODO Connect the 2 clients' main loops
+
+;; TODO Handle game logic on the server
+
+;; TODO Serialize game data as S-exprs sent as strings over the socket
+
+;;; Modules
+
+(define-module (game-lib)
+  #:export (<tile>
+	    <board>
+	    tile-width
+	    tile-height
+	    update-board!
+	    tile-contains?
+	    rect-clicked?
+	    range
+	    map-range
+	    deep-map
+	    draw-board))
+
+(use-modules (ice-9 rdelim)
+	     (oop goops)
+	     (rnrs bytevectors)
+	     (srfi srfi-26)
+	     (system repl coop-server) ; For live coding while the game is running
+	     (chickadee)
+	     (chickadee math vector)
+	     (chickadee math rect)
+	     (chickadee graphics texture)
+	     (chickadee graphics sprite)
+	     (chickadee graphics font)
+	     (chickadee scripting))
+
 ;;; Classes
 
 ;; NOTE GOOPS class slots (fields) can't take type specifiers unlike CLOS slots
@@ -5,7 +62,10 @@
   (image #:init-keyword #:image
 	 #:accessor     image)
   (bound #:init-keyword #:bound
-	 #:accessor     bound))
+	 #:accessor     bound)
+  ;; (status #:init-keyword #:status
+  ;; 	  #:accessor     status)
+  )
 
 (define-class <board> ()
   (tiles #:init-keyword #:tiles

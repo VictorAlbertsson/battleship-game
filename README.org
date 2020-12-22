@@ -1,0 +1,45 @@
+* Battleships
+
+** Dependencies
+
+- guile
+- guile-chickadee
+- a package manager
+  - guix is preferred since it automatically generates all required
+    environmental variables
+  - on other systems setting the ~GUILE_LOAD_PATH~ to the location of
+    installed libraries is required, on most Linux systems this will
+    be ~/usr/local/share/guile/site/{version}/~ or manually running
+    ~(add-to-load-path "path/to/battleships-folder")~ in the REPL
+    before doing ~(load "client")~ or ~(load "server")~. Though the
+    final version of this project is not actully functioning due to me
+    not having enough time make it into a fully fledged game and thus
+    is more of a proof-of-concept or prototype.
+
+** Status
+
+The general design is complete and most of the core is fully
+implemented, some things like networking and dynamic graphics/sound
+have been designed but not implemented or is not yet working.
+
+** Structure
+
+- ~client~ is the game client script
+- ~server~ is the game server script
+- ~game-lib.scm~ is the shared backend/game engine
+- ~image.bmp~ is just a test image that I didn't have time to replace
+
+** Class hierarchy
+
+- ~<tile>~ holds all data related to a tile on the board
+- ~<board>~ holds all tiles that belong to a player
+  - ~<board>~ -s are synchronized by the server between the players
+- Composition is used instead of inheritance due to the inherent flaws
+  of subtyping
+- ~tile-width~ and ~tile-height~ serve as immutable virtual slots/fields
+
+** Serialization
+
+As is the nature of Lisp serialization is mainly done with trivial
+s-expression->string functions and server-client messaging is also
+done via S-expressions and pattern matching on strings.
