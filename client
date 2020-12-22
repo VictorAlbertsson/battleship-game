@@ -1,0 +1,114 @@
+#!/usr/bin/env -S guile -s
+!# ;; -*- scheme -*- (for emacs)
+
+;;; TODOs
+
+;; DONE Render a single clickable UI element
+
+;; DONE* Create and render a grid of clickable buttons
+
+;; TODO Implement event dispatching to handle button clicks
+
+;; DONE Wrap everything in classes
+
+;; TODO Retrieve gamedata from a network port
+
+;; TODO Implement player turns
+
+;; TODO Implement server to connect to remote instances of the game
+
+;;; Modules
+
+;; All classes/methods/functions shared between the client and server
+;; goes into 'lib.scm'
+(load "lib.scm")
+
+(use-modules (ice-9 rdelim)
+	     (oop goops)
+	     (rnrs bytevectors)
+	     (srfi srfi-26)
+	     (system repl coop-server) ; For live coding while the game is running
+	     (chickadee)
+	     (chickadee math vector)
+	     (chickadee math rect)
+	     (chickadee graphics texture)
+	     (chickadee graphics sprite)
+	     (chickadee graphics font)
+	     (chickadee scripting))
+
+;;; Global variables
+
+;; Live coding setup
+(define repl (spawn-coop-repl-server))
+
+;; Global resources, set during load-time
+
+(define player #f)
+(define enemy  #f)
+(define game   #f)
+
+(define image #f)
+
+(define width  #f)
+(define height #f)
+(define center #f)
+
+(define test #f)
+
+(define (run-game-client server)
+  ;;; Initialization
+
+  (define (load)
+    ;; Chickadee auto-adjusts the absolute position of sprites to
+    ;; accomodate for the window resizing, trying to center a sprite
+    ;; dynamically using the window width and height will fail since the
+    ;; position adjustment is done after the draw function is called.
+    ;; Therefore I store the the initial center of the window and use
+    ;; that to align graphical elements.
+    (set! center (vec2 (/ (window-width  (current-window)) 2)
+		       (/ (window-height (current-window)) 2)))
+    ;; TEMPORARY For testing purposes only!
+    (set! image  (load-image "./image.bmp"))
+    ;; The client sends a 'meta command' and the server responds
+    (display ",self" server)
+    ;; Retreive the server response
+    (set! player (read-line server))
+    (display ",enemy")
+    (set! enemy (read-line server)))
+
+;;; Core event loop
+
+  (define (update dt)
+    ;; For live coding
+    (poll-coop-repl-server repl))
+
+  (define (draw alpha)
+    (let ((width  (texture-width  image))
+	  (height (texture-height image))
+	  (left   (vec2 (/ (vec2-x center)       2) (vec2-y center)))
+	  (right  (vec2 (/ (* 3 (vec2-x center)) 2) (vec2-y center))))
+      ;; (draw-board player left)
+      ;; (draw-board enemy  right)
+      #f))
+
+  (define (mouse-release mouse-button x y)
+    (cond ((deep-map (cut (rect-clicked? mouse-button
+					 (tile-width  <>)
+					 (tile-height <>)))
+		     (tiles player))
+	   (display "Gotcha!\n"))
+	  ((deep-map (cut (rect-clicked? mouse-button
+					 (tile-width  <>)
+					 (tile-height <>)))
+		     (tiles enemy))
+	   (display "Bombing!\n"))
+	  (else #f)))
+  (run-game #:load load #:update update #:draw draw #:mouse-release mouse-release))
+
+;;; Client
+
+(let* ((server (socket PF_INET SOCK_STREAM 0)))
+  (connect server AF_INET INADDR_ANY 2904)
+  (display "Hello server\r\n" server)
+  (read-line server)
+  (run-game-client server))

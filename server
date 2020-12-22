@@ -1,0 +1,55 @@
+#!/usr/bin/env -S guile -s
+!# ;; -*- scheme -*- (for emacs)
+
+;; All classes/methods/functions shared between the client and server
+;; goes into 'lib.scm'
+(load "lib.scm")
+
+;;; Server
+
+(use-modules (ice-9 rdelim))
+
+;; TODO Limit the number of connections to only 2
+;; TODO Connect the main loop of the server with that of the client
+;; TODO Connect the 2 clients' main loops
+;; TODO Handle game logic on the server
+;; TODO Serialize game data as S-exprs sent as strings over the socket
+(let ((server (socket PF_INET SOCK_STREAM 0)))
+  ;; Prevents the nightmare of 'address already in use' due to
+  ;; unclosed ports after the program has closed
+  (setsockopt server SOL_SOCKET SO_REUSEADDR 1)
+  ;; INADDR_ANY means any machine interface to the internet is valid
+  ;; including 'localhost'
+  (bind   server AF_INET INADDR_ANY 2904)
+  ;; Initialize the server connection
+  (listen server 2)
+  (define <1>player
+    (make <board>
+      #:tiles (list (list (make <tile> #:image image)
+			  (make <tile> #:image image)
+			  (make <tile> #:image image))
+		    (list (make <tile> #:image image)
+			  (make <tile> #:image image)
+			  (make <tile> #:image image))
+		    (list (make <tile> #:image image)
+			  (make <tile> #:image image)
+			  (make <tile> #:image image)))))
+  (define <2>player
+    (make <board>
+      #:tiles (list (list (make <tile> #:image image)
+			  (make <tile> #:image image)
+			  (make <tile> #:image image))
+		    (list (make <tile> #:image image)
+			  (make <tile> #:image image)
+			  (make <tile> #:image image))
+		    (list (make <tile> #:image image)
+			  (make <tile> #:image image)
+			  (make <tile> #:image image)))))
+  (while #t
+    (let* ((<1>client-connection (accept server)) ; Wait for a client
+	   (<1>client-details    (cdr <1>client-connection)) ; cdr = rest
+	   (<1>client            (car <1>client-connection)) ; car = first
+	   (<1>request           (read-line <1>client)))
+      (cond ((string=? <1>request ",test")  (display "'test' received!"))
+	    ((string=? <1>request ",self")  (write <1>player <1>client))
+	    ((string=? <1>request ",enemy") (write <1>player <2>client))))))
